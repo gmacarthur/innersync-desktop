@@ -17,9 +17,9 @@ class SyncService extends EventEmitter {
     );
 
     this.paths = {
-      tfxFile: resolveMaybe(this.baseDir, config.tfxFile, 'Timetable 2026.tfx'),
+      tfxFile: resolveMaybe(this.baseDir, config.tfxFile, 'Timetable.tfx'),
       outputDir: resolveMaybe(this.baseDir, config.outputDir, 'generated'),
-      watchFiles: (config.watchFiles || ['Timetable 2026.tfx']).map((file) =>
+      watchFiles: (config.watchFiles || ['Timetable.tfx']).map((file) =>
         resolveMaybe(this.baseDir, file)
       ),
       history: resolveMaybe(this.baseDir, config.historyPath, 'sync-history.json'),

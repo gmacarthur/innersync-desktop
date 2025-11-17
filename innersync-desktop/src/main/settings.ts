@@ -27,13 +27,13 @@ const API_BASE_URL = 'https://innersync.com.au';
 const DEFAULT_DEVICE_NAME = os.hostname() || 'innersync-desktop';
 
 const LEGACY_WATCH_PLACEHOLDERS = new Set([
-  'Timetable 2026.tfx',
-  'Year 7 2026.sfx',
-  'Year 8 2026.sfx',
-  'Year 9 2026.sfx',
-  'Year 10 2026.sfx',
-  'Year 11 2026.sfx',
-  'Year 12 2026.sfx',
+  'Timetable.tfx',
+  'Year 7.sfx',
+  'Year 8.sfx',
+  'Year 9.sfx',
+  'Year 10.sfx',
+  'Year 11.sfx',
+  'Year 12.sfx',
 ]);
 
 function sanitizeWatchFiles(list?: string[]) {

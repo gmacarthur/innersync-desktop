@@ -10,7 +10,7 @@ async function generateTimetable(options = {}) {
     ? path.isAbsolute(options.tfxFile)
       ? options.tfxFile
       : path.resolve(baseDir, options.tfxFile)
-    : path.join(baseDir, 'Timetable 2026.tfx');
+    : path.join(baseDir, 'Timetable.tfx');
   const outputDir = options.outputDir
     ? path.isAbsolute(options.outputDir)
       ? options.outputDir

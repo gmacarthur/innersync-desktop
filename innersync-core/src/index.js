@@ -9,7 +9,7 @@ async function main() {
   );
   const tfxFile = args.tfx
     ? path.resolve(process.cwd(), args.tfx)
-    : path.join(baseDir, 'Timetable 2026.tfx');
+    : path.join(baseDir, 'Timetable.tfx');
   const outputDir = args.output
     ? path.resolve(process.cwd(), args.output)
     : path.join(baseDir, 'generated');
