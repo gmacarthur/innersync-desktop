@@ -1,0 +1,26 @@
+{
+  "baseDir": "../",
+  "tfxFile": "Timetable 2026.tfx",
+  "outputDir": "generated",
+  "watchFiles": [
+    "Timetable 2026.tfx",
+    "Year 7 2026.sfx",
+    "Year 8 2026.sfx",
+    "Year 9 2026.sfx",
+    "Year 10 2026.sfx",
+    "Year 11 2026.sfx",
+    "Year 12 2026.sfx"
+  ],
+  "debounceMs": 2000,
+  "apiBaseUrl": "https://innersync.com.au",
+  "apiToken": null,
+  "login": {
+    "email": "admin@example.com",
+    "password": "secret",
+    "device_name": "electron-sync",
+    "replace_existing": true
+  },
+  "tokenCachePath": ".token-cache.json",
+  "historyPath": "sync-history.json",
+  "historyLimit": 50
+}
