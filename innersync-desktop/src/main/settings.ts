@@ -1,5 +1,4 @@
 import { promises as fs } from 'node:fs';
-import { existsSync } from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 
@@ -22,11 +21,25 @@ export type SyncSettings = {
   historyLimit: number;
   autoLaunch: boolean;
   autoUpdate: boolean;
-  history?: HistoryEntry[];
 };
 
 const API_BASE_URL = 'https://innersync.com.au';
 const DEFAULT_DEVICE_NAME = os.hostname() || 'innersync-desktop';
+
+const LEGACY_WATCH_PLACEHOLDERS = new Set([
+  'Timetable 2026.tfx',
+  'Year 7 2026.sfx',
+  'Year 8 2026.sfx',
+  'Year 9 2026.sfx',
+  'Year 10 2026.sfx',
+  'Year 11 2026.sfx',
+  'Year 12 2026.sfx',
+]);
+
+function sanitizeWatchFiles(list?: string[]) {
+  if (!Array.isArray(list)) return [];
+  return list.filter((value) => value && !LEGACY_WATCH_PLACEHOLDERS.has(value));
+}
 
 export function getDefaultSettings(userDataDir: string): SyncSettings {
   return {
@@ -81,11 +94,14 @@ export class SettingsStore {
         this.settings.login.device_name = DEFAULT_DEVICE_NAME;
       }
       this.settings.apiBaseUrl = API_BASE_URL;
-      if (!this.settings.watchFiles) {
-        this.settings.watchFiles = [];
-      }
+      this.settings.watchFiles = sanitizeWatchFiles(this.settings.watchFiles);
       if (!this.settings.tfxFile && this.settings.watchFiles.length > 0) {
         this.settings.tfxFile = this.settings.watchFiles[0];
+      } else if (
+        this.settings.tfxFile &&
+        !this.settings.watchFiles.includes(this.settings.tfxFile)
+      ) {
+        this.settings.tfxFile = undefined;
       }
     } catch (error: any) {
       if (error.code !== 'ENOENT') {
@@ -112,9 +128,7 @@ export class SettingsStore {
 
   async update(patch: Partial<SyncSettings>): Promise<SyncSettings> {
     const next = { ...this.settings, ...patch } as SyncSettings;
-    if (!next.watchFiles) {
-      next.watchFiles = [];
-    }
+    next.watchFiles = sanitizeWatchFiles(next.watchFiles);
     if (next.watchFiles.length === 0) {
       next.tfxFile = undefined;
     } else if (!next.tfxFile || !next.watchFiles.includes(next.tfxFile)) {

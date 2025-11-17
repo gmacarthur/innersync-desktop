@@ -1,6 +1,6 @@
 {
   "name": "innersync-desktop",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "private": true,
   "description": "Electron + React desktop shell for the Innersync timetable sync service.",
   "main": "dist-electron/main/index.js",

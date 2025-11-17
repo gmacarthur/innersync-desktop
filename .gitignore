@@ -11,6 +11,8 @@
 /innersync-desktop/dist-electron/
 /innersync-desktop/node_modules/
 /innersync-core/node_modules/
+.DS_Store
+
 # Logs / temp
 *.log
 /innersync-desktop/*.log

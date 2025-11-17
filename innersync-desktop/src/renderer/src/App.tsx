@@ -93,7 +93,26 @@ function App() {
       autoLaunch: Boolean(cfg.autoLaunch),
       watchFiles: normalizeWatchFiles(cfg.watchFiles),
       autoUpdate: cfg.autoUpdate ?? true,
-    });
+  });
+
+  const updateStatusText = useMemo(() => {
+    switch (updateStatus.status) {
+      case 'checking':
+        return 'Checking for updates…';
+      case 'available':
+        return updateStatus.message || 'New version available.';
+      case 'downloaded':
+        return 'Update downloaded. Click Install.';
+      case 'not-available':
+        return 'You already have the latest version.';
+      case 'error':
+        return updateStatus.message
+          ? `Update error: ${updateStatus.message}`
+          : 'Update check failed.';
+      default:
+        return updateStatus.message || 'Idle';
+    }
+  }, [updateStatus]);
     setLoginForm((prev) => ({
       ...prev,
       email: cfg.login?.email ?? prev.email,
@@ -542,19 +561,18 @@ function App() {
                   <button type="button" className="button-secondary" onClick={handleCheckUpdates}>
                     Check Now
                   </button>
-                  <button
-                    type="button"
-                    className="button-primary"
-                    onClick={handleInstallUpdate}
-                    disabled={updateStatus.status !== 'available'}
-                  >
-                    Install Update
-                  </button>
+                  {(updateStatus.status === 'available' || updateStatus.status === 'downloaded') && (
+                    <button
+                      type="button"
+                      className="button-primary"
+                      onClick={handleInstallUpdate}
+                      disabled={updateStatus.status !== 'available' && updateStatus.status !== 'downloaded'}
+                    >
+                      Install Update
+                    </button>
+                  )}
                 </div>
-                <p className="settings-hint">
-                  Status: {updateStatus.status}
-                  {updateStatus.message ? ` – ${updateStatus.message}` : ''}
-                </p>
+                <p className="settings-hint">Status: {updateStatusText}</p>
               </div>
             </section>
 
