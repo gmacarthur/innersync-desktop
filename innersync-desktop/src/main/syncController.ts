@@ -1,4 +1,5 @@
 import { EventEmitter } from 'node:events';
+import { existsSync } from 'node:fs';
 import os from 'node:os';
 import type { SyncSettings } from './settings';
 import type { SettingsStore } from './settings';
@@ -49,7 +50,7 @@ export class SyncController extends EventEmitter {
   async init() {
     this.currentSettings = await this.store.load();
     this.applyAutoLaunch(this.currentSettings.autoLaunch);
-    await this.startService(this.currentSettings);
+    await this.ensureServiceState(this.currentSettings);
   }
 
   private async startService(settings: SyncSettings) {
@@ -71,6 +72,48 @@ export class SyncController extends EventEmitter {
     await this.service.start();
     this.latestStatus = this.service.getStatus();
     this.latestHistory = this.latestStatus?.history ?? [];
+  }
+
+  private async stopService() {
+    if (this.service) {
+      await this.service.stop();
+      this.service.removeAllListeners();
+      this.service = null;
+    }
+  }
+
+  private canRun(settings: SyncSettings) {
+    if (!settings?.apiToken) return false;
+    if (!settings.baseDir) return false;
+    try {
+      if (!existsSync(settings.baseDir)) {
+        return false;
+      }
+    } catch {
+      return false;
+    }
+    const hasWatchFiles = Array.isArray(settings.watchFiles)
+      ? settings.watchFiles.some((file) => Boolean(file))
+      : false;
+    return hasWatchFiles;
+  }
+
+  private async ensureServiceState(settings: SyncSettings) {
+    if (this.canRun(settings)) {
+      await this.startService(settings);
+    } else {
+      await this.stopService();
+      this.latestStatus = {
+        state: settings.apiToken ? 'setup-required' : 'signed-out',
+        paused: true,
+        running: false,
+        lastRun: this.latestStatus?.lastRun,
+        lastResult: this.latestStatus?.lastResult,
+        history: this.latestHistory,
+      };
+      this.emit('status', this.latestStatus);
+      this.emit('history', this.latestHistory);
+    }
   }
 
   getStatus(): SyncStatus | null {
@@ -108,7 +151,7 @@ export class SyncController extends EventEmitter {
     }
     this.currentSettings = await this.store.update(patch);
     this.applyAutoLaunch(this.currentSettings.autoLaunch);
-    await this.startService(this.currentSettings);
+    await this.ensureServiceState(this.currentSettings);
     return this.currentSettings;
   }
 
@@ -179,11 +222,7 @@ export class SyncController extends EventEmitter {
   }
 
   async logout() {
-    if (this.service) {
-      await this.service.stop();
-      this.service.removeAllListeners();
-      this.service = null;
-    }
+    await this.stopService();
 
     if (this.currentSettings.tokenCachePath) {
       try {
@@ -203,16 +242,18 @@ export class SyncController extends EventEmitter {
     });
     this.currentSettings = nextSettings;
 
+    this.latestHistory = [];
     this.latestStatus = {
       state: 'signed-out',
       paused: true,
       running: false,
-      lastRun: this.latestStatus?.lastRun,
-      lastResult: this.latestStatus?.lastResult,
-      history: this.latestHistory,
+      lastRun: undefined,
+      lastResult: undefined,
+      history: [],
     };
     this.emit('status', this.latestStatus);
     this.emit('history', this.latestHistory);
+
     return nextSettings;
   }
 }

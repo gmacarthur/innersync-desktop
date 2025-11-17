@@ -31,16 +31,6 @@ type SettingsForm = {
 
 type Screen = 'login' | 'dashboard' | 'settings';
 
-const DEFAULT_WATCH_FILES = [
-  'Timetable 2026.tfx',
-  'Year 7 2026.sfx',
-  'Year 8 2026.sfx',
-  'Year 9 2026.sfx',
-  'Year 10 2026.sfx',
-  'Year 11 2026.sfx',
-  'Year 12 2026.sfx',
-];
-
 const WATCH_LABELS = [
   'Base timetable (.tfx)',
   'Year 7 file',
@@ -50,6 +40,20 @@ const WATCH_LABELS = [
   'Year 11 file',
   'Year 12 file',
 ];
+
+const EMPTY_WATCH_FILES = WATCH_LABELS.map(() => '');
+
+const normalizeWatchFiles = (input?: string[]) => {
+  const next = [...EMPTY_WATCH_FILES];
+  if (Array.isArray(input) && input.length > 0) {
+    input.forEach((value, index) => {
+      if (index < next.length) {
+        next[index] = value ?? '';
+      }
+    });
+  }
+  return next;
+};
 
 function App() {
   const DATE_LOCALE = 'en-AU';
@@ -61,7 +65,7 @@ function App() {
   const [form, setForm] = useState<SettingsForm>({
     baseDir: '',
     autoLaunch: false,
-    watchFiles: [],
+    watchFiles: [...EMPTY_WATCH_FILES],
     autoUpdate: true,
   });
   const [saving, setSaving] = useState(false);
@@ -87,8 +91,7 @@ function App() {
     setForm({
       baseDir: cfg.baseDir ?? '',
       autoLaunch: Boolean(cfg.autoLaunch),
-      watchFiles:
-        cfg.watchFiles && cfg.watchFiles.length > 0 ? cfg.watchFiles : DEFAULT_WATCH_FILES,
+      watchFiles: normalizeWatchFiles(cfg.watchFiles),
       autoUpdate: cfg.autoUpdate ?? true,
     });
     setLoginForm((prev) => ({
@@ -174,7 +177,7 @@ function App() {
 
   const handleWatchFileChange = (index: number, value: string) => {
     setForm((prev) => {
-      const next = [...prev.watchFiles];
+      const next = normalizeWatchFiles(prev.watchFiles);
       next[index] = value;
       return { ...prev, watchFiles: next };
     });
@@ -191,10 +194,13 @@ function App() {
   const handleSaveSettings = async () => {
     setSaving(true);
     try {
+      const watchFiles = form.watchFiles
+        .map((value) => value.trim())
+        .filter((value) => value.length > 0);
       const updated = await window.sync.updateSettings({
         baseDir: form.baseDir,
         autoLaunch: form.autoLaunch,
-        watchFiles: form.watchFiles,
+        watchFiles,
         autoUpdate: form.autoUpdate,
       });
       if (updated) {
@@ -565,9 +571,10 @@ function App() {
                           type="text"
                           value={form.watchFiles[index] ?? ''}
                           onChange={(event) => handleWatchFileChange(index, event.target.value)}
+                          placeholder="Select file…"
                         />
-                    <button type="button" className="ghost" onClick={() => pickWatchFile(index)}>
-                      Browse…
+                        <button type="button" className="ghost" onClick={() => pickWatchFile(index)}>
+                          Browse…
                         </button>
                       </div>
                     </div>
@@ -578,9 +585,9 @@ function App() {
                 <button
                   type="button"
                   className="ghost"
-                  onClick={() => setForm((prev) => ({ ...prev, watchFiles: [...DEFAULT_WATCH_FILES] }))}
+                  onClick={() => setForm((prev) => ({ ...prev, watchFiles: [...EMPTY_WATCH_FILES] }))}
                 >
-                    Reset to Defaults
+                    Clear All
                 </button>
                 <button className="button-primary" onClick={handleSaveSettings} disabled={saving}>
                   {saving ? 'Saving…' : 'Save Changes'}

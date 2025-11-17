@@ -4,6 +4,7 @@
 /StudentCourse.txt
 /StudentTimetable.txt
 /Timetable/
+/generated/
 
 # Build artifacts
 /innersync-desktop/dist/
