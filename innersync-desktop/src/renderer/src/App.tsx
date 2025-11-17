@@ -77,7 +77,11 @@ function App() {
   const [loginStatus, setLoginStatus] = useState<{ state: 'idle' | 'pending' | 'success' | 'error'; message?: string }>({
     state: 'idle',
   });
-  const [updateStatus, setUpdateStatus] = useState<{ status: string; message?: string }>({
+  const [updateStatus, setUpdateStatus] = useState<{
+    status: string;
+    message?: string;
+    info?: { version?: string };
+  }>({
     status: 'idle',
   });
   const [screen, setScreen] = useState<Screen>('login');
@@ -96,13 +100,18 @@ function App() {
   });
 
   const updateStatusText = useMemo(() => {
+    const versionLabel = updateStatus.info?.version
+      ? `Version ${updateStatus.info.version}`
+      : null;
     switch (updateStatus.status) {
       case 'checking':
         return 'Checking for updates…';
       case 'available':
-        return updateStatus.message || 'New version available.';
+        return versionLabel ? `Update available: ${versionLabel}` : 'Update available.';
       case 'downloaded':
-        return 'Update downloaded. Click Install.';
+        return versionLabel
+          ? `${versionLabel} downloaded. Click Install.`
+          : 'Update downloaded. Click Install.';
       case 'not-available':
         return 'You already have the latest version.';
       case 'error':
@@ -561,12 +570,12 @@ function App() {
                   <button type="button" className="button-secondary" onClick={handleCheckUpdates}>
                     Check Now
                   </button>
-                  {(updateStatus.status === 'available' || updateStatus.status === 'downloaded') && (
+                  {updateStatus.status === 'available' && (
                     <button
                       type="button"
                       className="button-primary"
                       onClick={handleInstallUpdate}
-                      disabled={updateStatus.status !== 'available' && updateStatus.status !== 'downloaded'}
+                      disabled={updateStatus.status !== 'available'}
                     >
                       Install Update
                     </button>
