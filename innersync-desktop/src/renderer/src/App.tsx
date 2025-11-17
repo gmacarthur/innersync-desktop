@@ -97,7 +97,14 @@ function App() {
       autoLaunch: Boolean(cfg.autoLaunch),
       watchFiles: normalizeWatchFiles(cfg.watchFiles),
       autoUpdate: cfg.autoUpdate ?? true,
-  });
+    });
+    setLoginForm((prev) => ({
+      ...prev,
+      email: cfg.login?.email ?? prev.email,
+      remember: Boolean(cfg.login?.remember),
+      password: options.resetPassword ? '' : prev.password,
+    }));
+  };
 
   const updateStatusText = useMemo(() => {
     const versionLabel = updateStatus.info?.version
@@ -122,13 +129,6 @@ function App() {
         return updateStatus.message || 'Idle';
     }
   }, [updateStatus]);
-    setLoginForm((prev) => ({
-      ...prev,
-      email: cfg.login?.email ?? prev.email,
-      remember: Boolean(cfg.login?.remember),
-      password: options.resetPassword ? '' : prev.password,
-    }));
-  };
 
   const formatErrorMessage = (error: any): string => {
     if (!error) return 'Unknown error';
