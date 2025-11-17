@@ -91,7 +91,7 @@ async function createWindow() {
     mainWindow.webContents.openDevTools({ mode: 'detach' });
   } else {
     await mainWindow.loadURL(
-      new URL('../renderer/dist/index.html', 'file://' + __dirname + '/').toString()
+      new URL('../dist/index.html', 'file://' + __dirname + '/').toString()
     );
   }
 }
