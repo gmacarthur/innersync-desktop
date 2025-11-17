@@ -1,13 +1,16 @@
 {
   "name": "innersync-desktop",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Electron + React desktop shell for the Innersync timetable sync service.",
   "main": "dist-electron/main/index.js",
   "type": "module",
+  "author": "Innerbit Pty Ltd",
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
+    "package": "npm run build && electron-builder build --dir --win",
+    "dist": "npm run build && electron-builder build --win",
     "preview": "electron-vite preview",
     "lint": "eslint \"src/**/*.{ts,tsx}\""
   },
@@ -23,11 +26,45 @@
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
     "electron": "^30.0.8",
+    "electron-builder": "^24.13.3",
     "electron-vite": "^2.1.0",
     "eslint": "^8.57.0",
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.6",
     "typescript": "^5.4.5",
     "vite": "^5.2.11"
+  },
+  "build": {
+    "appId": "com.innersync.desktop",
+    "productName": "Innersync Desktop",
+    "directories": {
+      "buildResources": "resources"
+    },
+    "files": [
+      "dist-electron/**/*",
+      "dist/**/*",
+      "package.json",
+      "node_modules/**/*"
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "artifactName": "innersync-desktop-${version}-setup.${ext}",
+      "publisherName": "Innersync Pty Ltd"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": false,
+      "createDesktopShortcut": true
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "gmacarthur",
+        "repo": "innersync-desktop"
+      }
+    ]
   }
 }
