@@ -1,0 +1,123 @@
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
+
+export type SyncSettings = {
+  baseDir: string;
+  tfxFile?: string;
+  outputDir: string;
+  watchFiles: string[];
+  debounceMs: number;
+  apiToken?: string | null;
+  login: {
+    email: string;
+    password: string;
+    device_name: string;
+    replace_existing: boolean;
+    remember: boolean;
+  };
+  tokenCachePath: string;
+  historyPath: string;
+  historyLimit: number;
+  autoLaunch: boolean;
+  autoUpdate: boolean;
+};
+
+const API_BASE_URL = 'https://innersync.com.au';
+const DEFAULT_DEVICE_NAME = os.hostname() || 'innersync-desktop';
+
+export const DEFAULT_WATCH_FILES = [
+  'Timetable 2026.tfx',
+  'Year 7 2026.sfx',
+  'Year 8 2026.sfx',
+  'Year 9 2026.sfx',
+  'Year 10 2026.sfx',
+  'Year 11 2026.sfx',
+  'Year 12 2026.sfx',
+];
+
+export function getDefaultSettings(userDataDir: string): SyncSettings {
+  const documents = path.join(os.homedir(), 'Documents');
+  const timetableDir = path.join(documents, 'Timetable');
+  return {
+    baseDir: timetableDir,
+    tfxFile: DEFAULT_WATCH_FILES[0],
+    outputDir: path.join(userDataDir, 'generated'),
+    watchFiles: [...DEFAULT_WATCH_FILES],
+    debounceMs: 2000,
+    apiToken: null,
+    login: {
+      email: '',
+      password: '',
+      device_name: DEFAULT_DEVICE_NAME,
+      replace_existing: true,
+      remember: false,
+    },
+    tokenCachePath: path.join(userDataDir, '.cache', 'token.json'),
+    historyPath: path.join(userDataDir, 'history', 'sync-history.json'),
+    historyLimit: 100,
+    autoLaunch: false,
+    autoUpdate: true,
+  };
+}
+
+export class SettingsStore {
+  private filePath: string;
+  private settings: SyncSettings;
+
+  constructor(private userDataDir: string) {
+    this.filePath = path.join(userDataDir, 'settings.json');
+    this.settings = getDefaultSettings(userDataDir);
+  }
+
+  async load(): Promise<SyncSettings> {
+    try {
+      const raw = await fs.readFile(this.filePath, 'utf8');
+      const parsed = JSON.parse(raw);
+      const defaults = getDefaultSettings(this.userDataDir);
+      this.settings = { ...defaults, ...parsed };
+      if (!this.settings.login) {
+        this.settings.login = { ...defaults.login };
+      } else if (!this.settings.login.device_name) {
+        this.settings.login.device_name = DEFAULT_DEVICE_NAME;
+      }
+      this.settings.apiBaseUrl = API_BASE_URL;
+      if (!this.settings.watchFiles || this.settings.watchFiles.length === 0) {
+        this.settings.watchFiles = [...DEFAULT_WATCH_FILES];
+      }
+      if (!this.settings.tfxFile) {
+        this.settings.tfxFile = this.settings.watchFiles[0] || DEFAULT_WATCH_FILES[0];
+      }
+    } catch (error: any) {
+      if (error.code !== 'ENOENT') {
+        console.warn('[settings] unable to load config, using defaults', error.message);
+      }
+      await this.save(this.settings);
+    }
+    return this.settings;
+  }
+
+  get(): SyncSettings {
+    return this.settings;
+  }
+
+  async save(next?: SyncSettings): Promise<SyncSettings> {
+    if (next) {
+      this.settings = next;
+    }
+    await fs.mkdir(path.dirname(this.filePath), { recursive: true });
+    const { apiBaseUrl, ...rest } = this.settings as any;
+    await fs.writeFile(this.filePath, JSON.stringify(rest, null, 2), 'utf8');
+    return this.settings;
+  }
+
+  async update(patch: Partial<SyncSettings>): Promise<SyncSettings> {
+    const next = { ...this.settings, ...patch } as SyncSettings;
+    if (!next.watchFiles || next.watchFiles.length === 0) {
+      next.watchFiles = [...DEFAULT_WATCH_FILES];
+    }
+    next.tfxFile = patch.tfxFile || next.watchFiles[0] || DEFAULT_WATCH_FILES[0];
+    next.apiBaseUrl = API_BASE_URL;
+    return this.save(next as SyncSettings);
+  }
+}
